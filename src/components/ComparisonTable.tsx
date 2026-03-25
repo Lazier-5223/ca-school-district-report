@@ -22,7 +22,7 @@ export default function ComparisonTable() {
               <th className="px-4 py-3 font-semibold">亚裔占比</th>
               <th className="px-4 py-3 font-semibold">ESL</th>
               <th className="px-4 py-3 font-semibold">竞争强度</th>
-              <th className="px-4 py-3 font-semibold">年税/房价</th>
+              <th className="px-4 py-3 font-semibold">平均月租/房价</th>
               <th className="px-4 py-3 font-semibold">综合价值</th>
               <th className="rounded-r-xl px-4 py-3 font-semibold">简评</th>
             </tr>

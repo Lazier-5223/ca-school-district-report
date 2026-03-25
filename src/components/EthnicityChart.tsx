@@ -12,13 +12,88 @@ import {
 } from "recharts";
 import { districtsData } from "@/data/districts";
 
-const chartData = districtsData.map((district) => ({
-  name: district.name.split(" (")[0],
-  asian: district.ethnicity.asian,
-  white: district.ethnicity.white,
-  hispanic: district.ethnicity.hispanic,
-  other: district.ethnicity.other,
-}));
+/** 解析学区展示名：X 轴用中文简称，悬停标题为「中文(英文)」 */
+function parseDistrictDisplayName(fullName: string) {
+  const m = fullName.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (m) {
+    const cn = m[1].trim();
+    const en = m[2].trim();
+    return { shortName: cn, tooltipTitle: `${cn}(${en})` };
+  }
+  return { shortName: fullName.trim(), tooltipTitle: fullName.trim() };
+}
+
+type EthnicityChartRow = {
+  name: string;
+  tooltipTitle: string;
+  asian: number;
+  white: number;
+  hispanic: number;
+  other: number;
+};
+
+const chartData: EthnicityChartRow[] = districtsData.map((district) => {
+  const { shortName, tooltipTitle } = parseDistrictDisplayName(district.name);
+  return {
+    name: shortName,
+    tooltipTitle,
+    asian: district.ethnicity.asian,
+    white: district.ethnicity.white,
+    hispanic: district.ethnicity.hispanic,
+    other: district.ethnicity.other,
+  };
+});
+
+type TooltipPayloadItem = {
+  name?: string;
+  value?: number;
+  dataKey?: string | number;
+  color?: string;
+  payload?: EthnicityChartRow;
+};
+
+function EthnicityTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload as EthnicityChartRow | undefined;
+  const title = row?.tooltipTitle ?? "";
+
+  return (
+    <div
+      className="rounded-xl border border-[#e6dece] bg-[#fffdf8] px-3 py-2.5 shadow-sm"
+      style={{ fontSize: 13 }}
+    >
+      <p className="mb-2 font-medium text-[#1e3a5f]">{title}</p>
+      <ul className="space-y-0.5">
+        {payload.map((item) => {
+          const v = item.value;
+          const label =
+            item.name != null && item.name !== ""
+              ? String(item.name)
+              : String(item.dataKey ?? "");
+          const text =
+            v != null && !Number.isNaN(v)
+              ? `${label} : ${v}%`
+              : label;
+          return (
+            <li
+              key={String(item.dataKey)}
+              className="list-none"
+              style={{ color: item.color ?? "#2c3e50" }}
+            >
+              {text}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 export default function EthnicityChart() {
   return (
@@ -53,16 +128,7 @@ export default function EthnicityChart() {
                 fontSize: 12,
               }}
             />
-            <Tooltip
-              formatter={(value) =>
-                value != null && value !== "" ? `${value}%` : ""
-              }
-              contentStyle={{
-                borderRadius: "12px",
-                border: "1px solid #e6dece",
-                backgroundColor: "#fffdf8",
-              }}
-            />
+            <Tooltip content={<EthnicityTooltip />} />
             <Legend />
             <Bar dataKey="asian" stackId="a" name="亚裔 Asian" fill="#e67e4a" />
             <Bar dataKey="white" stackId="a" name="白人 White" fill="#4f87c7" />
